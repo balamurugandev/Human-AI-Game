@@ -20,9 +20,10 @@ from flask import (
 app = Flask(__name__)
 app.secret_key = "humanai-web-secret-2026"
 
-# ── Configuration ─────────────────────────────────────────────────────────────
-# Adjusted path for Vercel: api/index.py -> ../public/img
-IMAGE_FOLDER    = os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))), "public", "img")
+# Look in api/img (inside serverless bundle) with fallback to public/img
+API_DIR = os.path.dirname(os.path.abspath(__file__))
+IMAGE_FOLDER = os.path.join(API_DIR, "img")
+PUBLIC_IMG_FOLDER = os.path.join(os.path.dirname(API_DIR), "public", "img")
 ORIG_SUFFIXES   = ("_orig", "_original")
 AI_SUFFIXES     = ("_ai",)
 IMAGE_EXTS      = (".jpg", ".jpeg", ".png", ".webp", ".bmp", ".gif")
@@ -274,10 +275,11 @@ def play_again():
 @app.route("/img/<path:filename>")
 def serve_image(filename):
     safe_name = os.path.basename(filename)
-    full_path = os.path.join(IMAGE_FOLDER, safe_name)
-    if not os.path.isfile(full_path):
-        abort(404)
-    return send_file(full_path)
+    for folder in (IMAGE_FOLDER, PUBLIC_IMG_FOLDER):
+        full_path = os.path.join(folder, safe_name)
+        if os.path.isfile(full_path):
+            return send_file(full_path)
+    abort(404)
 
 @app.route("/leaderboard")
 def leaderboard():
