@@ -15,9 +15,16 @@
     width: 46%;
     min-width: 300px;
     max-width: 520px;
-    transition: background .35s;
+    transition: background .35s, transform .2s, box-shadow .2s, border-color .2s;
     display: flex;
     flex-direction: column;
+    cursor: pointer;
+    border: 2px solid transparent;
+  }
+  .img-card:hover:not(.answered) {
+    transform: translateY(-4px);
+    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.4);
+    border-color: rgba(255, 255, 255, 0.2);
   }
   .img-card h3 {
     text-align: center;
@@ -32,6 +39,11 @@
     border-radius: 8px;
     background: #111827;
     display: block;
+    cursor: pointer;
+    transition: opacity .2s;
+  }
+  .img-card:hover:not(.answered) img {
+    opacity: 0.95;
   }
   .choice-btn {
     width: 100%;
@@ -48,8 +60,8 @@
   }
   .choice-btn:hover:not(:disabled) { background: #1a4a7a; }
   .choice-btn:disabled { cursor: default; }
-  .card-green { background: #0d2b12 !important; }
-  .card-red   { background: #2b0d0d !important; }
+  .card-green { background: #0d2b12 !important; border-color: var(--green) !important; }
+  .card-red   { background: #2b0d0d !important; border-color: var(--red) !important; }
   .btn-correct { background: var(--green-dk) !important; color: var(--white) !important; }
   .btn-wrong   { background: var(--red)      !important; color: var(--white) !important; }
 </style>
@@ -63,25 +75,25 @@
 
 <p style="text-align:center; color:var(--muted); margin:14px 0; font-size:.98rem; padding:0 16px;">
   Which image is the <strong style="color:var(--white);">ORIGINAL photograph</strong>?
-  &nbsp;Click your choice below.
+  &nbsp;Click on an image or button below to select.
 </p>
 
 <!-- Image arena -->
 <div class="arena">
   <!-- Left card -->
-  <div class="img-card" id="card-left">
+  <div class="img-card" id="card-left" onclick="selectSide('left')">
     <h3>Image&nbsp;A</h3>
     <img src="/img/{{ left_img }}" alt="Image A" loading="eager">
-    <button class="choice-btn" id="btn-left" onclick="selectSide('left')">
+    <button class="choice-btn" id="btn-left" onclick="event.stopPropagation(); selectSide('left')">
       ✓&nbsp; This is the Original
     </button>
   </div>
 
   <!-- Right card -->
-  <div class="img-card" id="card-right">
+  <div class="img-card" id="card-right" onclick="selectSide('right')">
     <h3>Image&nbsp;B</h3>
     <img src="/img/{{ right_img }}" alt="Image B" loading="eager">
-    <button class="choice-btn" id="btn-right" onclick="selectSide('right')">
+    <button class="choice-btn" id="btn-right" onclick="event.stopPropagation(); selectSide('right')">
       ✓&nbsp; This is the Original
     </button>
   </div>
@@ -140,6 +152,8 @@
     if (answered) return;
     answered = true;
 
+    document.getElementById('card-left').classList.add('answered');
+    document.getElementById('card-right').classList.add('answered');
     document.getElementById('btn-left').disabled  = true;
     document.getElementById('btn-right').disabled = true;
 
