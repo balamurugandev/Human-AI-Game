@@ -43,21 +43,21 @@ def _strip_suffix(basename: str, suffixes: tuple) -> str | None:
     return None
 
 def load_pairs() -> list:
-    if not os.path.isdir(IMAGE_FOLDER):
-        return []
-    registry: dict = {}
-    for fname in os.listdir(IMAGE_FOLDER):
-        base, ext = os.path.splitext(fname)
-        if ext.lower() not in IMAGE_EXTS:
-            continue
-        key = _strip_suffix(base, ORIG_SUFFIXES)
-        if key is not None:
-            registry.setdefault(key, {})["original"] = fname
-            continue
-        key = _strip_suffix(base, AI_SUFFIXES)
-        if key is not None:
-            registry.setdefault(key, {})["ai"] = fname
-    return [(k, v) for k, v in registry.items() if "original" in v and "ai" in v]
+    pairs = {
+        "Stonehenge": {"original": "Stonehenge_orig.jpg", "ai": "Stonehenge_ai.png"},
+        "Sydney": {"original": "Sydney_orig.jpg", "ai": "Sydney_ai.png"},
+        "albert": {"original": "albert_orig.png", "ai": "albert_ai.png"},
+        "gothic": {"original": "gothic_orig.webp", "ai": "gothic_ai.png"},
+        "monalisa": {"original": "monalisa_orig.jpg", "ai": "monalisa_ai.png"},
+        "pearl": {"original": "pearl_orig.jpeg", "ai": "pearl_ai.png"},
+        "school": {"original": "school_orig.webp", "ai": "school_ai.png"},
+        "scream": {"original": "scream_orig.jpeg", "ai": "scream_ai.png"},
+        "self": {"original": "self_orig.avif", "ai": "self_ai.webp"},
+        "starrynight": {"original": "starrynight_orig.jpg", "ai": "starrynight_ai.png"},
+        "water": {"original": "water_orig.jpg", "ai": "water_ai.png"},
+        "wave": {"original": "wave_orig.jpeg", "ai": "wave_ai.png"},
+    }
+    return [(k, v) for k, v in pairs.items()]
 
 def format_elapsed(ms: int) -> str:
     total_s, rem_ms = divmod(int(ms), 1000)
