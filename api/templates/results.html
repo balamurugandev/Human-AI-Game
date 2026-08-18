@@ -1,0 +1,41 @@
+{% extends "base.html" %}
+{% block content %}
+<div style="display:flex; flex-direction:column; align-items:center; justify-content:center;
+            min-height:100vh; padding:48px 20px; text-align:center;">
+
+  <h1 style="font-size:2.8rem; font-weight:900; color:var(--accent); margin-bottom:6px;">
+    Game Over!
+  </h1>
+  <p style="font-size:1.25rem; color:var(--white); margin-bottom:20px;">
+    Well done, <strong>{{ name }}</strong>!
+  </p>
+
+  <!-- Big score -->
+  <div style="font-size:6rem; font-weight:900; color:var(--accent); line-height:1; margin-bottom:8px;">
+    {{ score }}&nbsp;/&nbsp;{{ total }}
+  </div>
+
+  <!-- Verdict -->
+  <p style="font-size:1.15rem; color:{{ verdict_color }}; margin-bottom:10px;">
+    {{ verdict }}
+  </p>
+
+  <!-- Time taken -->
+  <p style="font-size:1rem; color:var(--muted); margin-bottom:36px;">
+    ⏱&nbsp; Time taken:&nbsp;
+    <strong style="color:var(--white);">{{ time_str }}</strong>
+  </p>
+
+  <!-- Action buttons -->
+  <div style="display:flex; gap:12px; flex-wrap:wrap; justify-content:center;">
+    <a href="/leaderboard" class="btn btn-secondary"
+       style="padding:14px 28px;">
+      🏆&nbsp; Leaderboard
+    </a>
+    <a href="/" class="btn btn-primary"
+       style="padding:14px 32px;">
+      👤&nbsp; New Player
+    </a>
+  </div>
+</div>
+{% endblock %}

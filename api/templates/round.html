@@ -1,0 +1,201 @@
+{% extends "base.html" %}
+{% block content %}
+<style>
+  .arena {
+    display: flex;
+    justify-content: center;
+    gap: 24px;
+    padding: 12px 24px 8px;
+    flex-wrap: wrap;
+  }
+  .img-card {
+    background: var(--bg2);
+    border-radius: 12px;
+    padding: 18px;
+    width: 46%;
+    min-width: 300px;
+    max-width: 520px;
+    transition: background .35s;
+    display: flex;
+    flex-direction: column;
+  }
+  .img-card h3 {
+    text-align: center;
+    font-size: 1.05rem;
+    margin-bottom: 12px;
+    color: var(--white);
+  }
+  .img-card img {
+    width: 100%;
+    height: 340px;
+    object-fit: contain;
+    border-radius: 8px;
+    background: #111827;
+    display: block;
+  }
+  .choice-btn {
+    width: 100%;
+    margin-top: 14px;
+    padding: 12px;
+    background: var(--bg3);
+    color: var(--white);
+    border: none;
+    border-radius: 7px;
+    font-size: .95rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: background .2s, opacity .15s;
+  }
+  .choice-btn:hover:not(:disabled) { background: #1a4a7a; }
+  .choice-btn:disabled { cursor: default; }
+  .card-green { background: #0d2b12 !important; }
+  .card-red   { background: #2b0d0d !important; }
+  .btn-correct { background: var(--green-dk) !important; color: var(--white) !important; }
+  .btn-wrong   { background: var(--red)      !important; color: var(--white) !important; }
+</style>
+
+<!-- Top bar -->
+<div class="top-bar">
+  <span class="round-label">Round {{ round_num }} of {{ total_rounds }}</span>
+  <span class="timer" id="timer-display">⏱&nbsp; 00:00.00</span>
+  <span class="score-label" id="score-display">Score: {{ score }} / {{ round_num - 1 }}</span>
+</div>
+
+<p style="text-align:center; color:var(--muted); margin:14px 0; font-size:.98rem; padding:0 16px;">
+  Which image is the <strong style="color:var(--white);">ORIGINAL photograph</strong>?
+  &nbsp;Click your choice below.
+</p>
+
+<!-- Image arena -->
+<div class="arena">
+  <!-- Left card -->
+  <div class="img-card" id="card-left">
+    <h3>Image&nbsp;A</h3>
+    <img src="/img/{{ left_img }}" alt="Image A" loading="eager">
+    <button class="choice-btn" id="btn-left" onclick="selectSide('left')">
+      ✓&nbsp; This is the Original
+    </button>
+  </div>
+
+  <!-- Right card -->
+  <div class="img-card" id="card-right">
+    <h3>Image&nbsp;B</h3>
+    <img src="/img/{{ right_img }}" alt="Image B" loading="eager">
+    <button class="choice-btn" id="btn-right" onclick="selectSide('right')">
+      ✓&nbsp; This is the Original
+    </button>
+  </div>
+</div>
+
+<!-- Feedback line -->
+<div id="feedback" style="text-align:center; min-height:34px; font-size:1.2rem;
+     font-weight:700; margin:10px 0 4px;"></div>
+
+<!-- Hidden form used for auto-advance -->
+<form id="next-form" action="/next" method="POST" style="display:none;">
+  <input type="hidden" name="elapsed_ms" id="elapsed-input" value="0">
+</form>
+
+<script>
+  const ROUND_NUM    = {{ round_num }};
+  const STORAGE_KEY  = 'humanai_game_start';
+  let   answered     = false;
+  let   timerHandle  = null;
+
+  /* ── Timer ─────────────────────────────────────────────────────────────── */
+  if (ROUND_NUM === 1) {
+    // New game — reset the stored start time
+    sessionStorage.setItem(STORAGE_KEY, Date.now());
+  } else if (!sessionStorage.getItem(STORAGE_KEY)) {
+    // Fallback: session lost (e.g. new tab)
+    sessionStorage.setItem(STORAGE_KEY, Date.now());
+  }
+
+  function getElapsed() {
+    return Date.now() - parseInt(sessionStorage.getItem(STORAGE_KEY));
+  }
+
+  function fmtTimer(ms) {
+    const totalS = Math.floor(ms / 1000);
+    const remMs  = ms % 1000;
+    const mins   = Math.floor(totalS / 60);
+    const secs   = totalS % 60;
+    const cs     = Math.floor(remMs / 10);
+    return String(mins).padStart(2,'0') + ':' +
+           String(secs).padStart(2,'0') + '.' +
+           String(cs).padStart(2,'0');
+  }
+
+  function tickTimer() {
+    const elapsed = getElapsed();
+    document.getElementById('timer-display').textContent = '⏱\u2002' + fmtTimer(elapsed);
+    document.getElementById('elapsed-input').value = elapsed;
+  }
+
+  timerHandle = setInterval(tickTimer, 100);
+  tickTimer();
+
+  /* ── Answer selection ──────────────────────────────────────────────────── */
+  function selectSide(side) {
+    if (answered) return;
+    answered = true;
+
+    document.getElementById('btn-left').disabled  = true;
+    document.getElementById('btn-right').disabled = true;
+
+    const elapsed = getElapsed();
+    document.getElementById('elapsed-input').value = elapsed;
+
+    fetch('/answer', {
+      method:  'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body:    JSON.stringify({ choice: side, elapsed_ms: elapsed }),
+    })
+    .then(r => r.json())
+    .then(data => {
+      const correctSide = data.correct_side;   // "left" or "right"
+      const correct     = data.correct;
+      const newScore    = data.score;
+      const wrongSide   = correctSide === 'left' ? 'right' : 'left';
+
+      // Score display
+      document.getElementById('score-display').textContent =
+        'Score: ' + newScore + ' / ' + ROUND_NUM;
+
+      // Card backgrounds
+      document.getElementById('card-' + correctSide).classList.add('card-green');
+      document.getElementById('card-' + wrongSide).classList.add('card-red');
+
+      // Button labels
+      const goodBtn = document.getElementById('btn-' + correctSide);
+      const badBtn  = document.getElementById('btn-' + wrongSide);
+      goodBtn.textContent = '✓  ORIGINAL (real photo)';
+      goodBtn.classList.add('btn-correct');
+      badBtn.textContent  = '✗  AI GENERATED';
+      badBtn.classList.add('btn-wrong');
+
+      // Feedback message
+      const fb = document.getElementById('feedback');
+      if (correct) {
+        fb.style.color   = 'var(--green)';
+        fb.textContent   = '✓  Correct! That was the original.';
+      } else {
+        fb.style.color   = 'var(--accent)';
+        fb.textContent   = '✗  Wrong! The other image was the original.';
+      }
+
+      // Auto-advance after 1 second
+      setTimeout(() => {
+        document.getElementById('elapsed-input').value = getElapsed();
+        document.getElementById('next-form').submit();
+      }, 1000);
+    })
+    .catch(() => {
+      // Network error fallback — re-enable buttons
+      answered = false;
+      document.getElementById('btn-left').disabled  = false;
+      document.getElementById('btn-right').disabled = false;
+    });
+  }
+</script>
+{% endblock %}

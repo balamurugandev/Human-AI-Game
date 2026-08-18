@@ -1,0 +1,87 @@
+{% extends "base.html" %}
+{% block content %}
+<div style="max-width:1060px; margin:0 auto; padding:44px 24px;">
+
+  <h1 style="font-size:2.4rem; font-weight:900; color:var(--accent);
+             text-align:center; margin-bottom:32px;">
+    🏆&nbsp; Leaderboard
+  </h1>
+
+  {% if error %}
+  <div class="error-box" style="text-align:center; margin-bottom:20px;">{{ error }}</div>
+  {% endif %}
+
+  {% if scores %}
+  <div style="overflow-x:auto; border-radius:12px; overflow:hidden;">
+    <table style="width:100%; border-collapse:collapse; background:var(--bg2);">
+      <thead>
+        <tr style="background:var(--bg3);">
+          <th style="padding:12px 14px; text-align:left; color:var(--muted);
+                     font-size:.85rem; font-weight:600; white-space:nowrap;">#</th>
+          <th style="padding:12px 14px; text-align:left; color:var(--muted);
+                     font-size:.85rem; font-weight:600; white-space:nowrap;">Name</th>
+          <th style="padding:12px 14px; text-align:left; color:var(--muted);
+                     font-size:.85rem; font-weight:600; white-space:nowrap;">Email</th>
+          <th style="padding:12px 14px; text-align:left; color:var(--muted);
+                     font-size:.85rem; font-weight:600; white-space:nowrap;">Score</th>
+          <th style="padding:12px 14px; text-align:left; color:var(--muted);
+                     font-size:.85rem; font-weight:600; white-space:nowrap;">Time</th>
+          <th style="padding:12px 14px; text-align:left; color:var(--muted);
+                     font-size:.85rem; font-weight:600; white-space:nowrap;">Date</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for row in scores %}
+        <tr style="background:{% if loop.index % 2 == 0 %}var(--bg2){% else %}#1c2444{% endif %};
+                   border-top:1px solid #0d1530;">
+          <td style="padding:10px 14px; font-weight:700;
+              color:{% if loop.index == 1 %}#ffd700
+                    {% elif loop.index == 2 %}#c0c0c0
+                    {% elif loop.index == 3 %}#cd7f32
+                    {% else %}var(--muted){% endif %};">
+            {{ loop.index }}
+          </td>
+          <td style="padding:10px 14px; font-weight:600;">{{ row.Name }}</td>
+          <td style="padding:10px 14px; color:var(--muted); font-size:.88rem; word-break:break-all;">{{ row.Email }}</td>
+          <td style="padding:10px 14px; color:var(--accent); font-weight:700;">
+            {{ row.Score }} / {{ row.Total }} &nbsp;({{ row.Percentage }})
+          </td>
+          <td style="padding:10px 14px; color:var(--yellow);
+                     font-variant-numeric:tabular-nums;">{{ row.TimeTaken }}</td>
+          <td style="padding:10px 14px; color:var(--muted); font-size:.88rem;">{{ row.Date }}</td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+  {% else %}
+  <p style="text-align:center; color:var(--muted); font-size:1.1rem; padding:56px 0;">
+    No scores recorded yet — play a round first!
+  </p>
+  {% endif %}
+
+  <!-- Footer actions -->
+  <div style="display:flex; align-items:center; flex-wrap:wrap; gap:12px; margin-top:32px;">
+    <a href="/" class="btn btn-secondary">&#8592; Back to Start</a>
+
+    <!-- Collapsible reset section -->
+    <details style="margin-left:auto;">
+      <summary style="cursor:pointer; list-style:none; user-select:none;
+                      background:var(--red-dk); color:#ff6b6b; border-radius:7px;
+                      padding:10px 18px; font-size:.93rem; font-weight:600;">
+        🗑&nbsp; Reset Leaderboard
+      </summary>
+      <div style="margin-top:10px; background:var(--bg2); padding:16px 18px;
+                  border-radius:8px; display:flex; align-items:center; gap:10px; flex-wrap:wrap;">
+        <form action="/leaderboard/reset" method="POST"
+              style="display:flex; gap:10px; align-items:center; flex-wrap:wrap;"
+              onsubmit="return confirm('This will permanently delete all web leaderboard scores. Continue?');">
+          <input class="text-input" type="password" name="password"
+                 placeholder="Admin password" style="width:220px;" required>
+          <button type="submit" class="btn btn-danger">Confirm Reset</button>
+        </form>
+      </div>
+    </details>
+  </div>
+</div>
+{% endblock %}
