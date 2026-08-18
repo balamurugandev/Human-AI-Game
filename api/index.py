@@ -272,25 +272,6 @@ def serve_image(filename):
 def leaderboard():
     return render_template("leaderboard.html", scores=_load_scores(), error=None)
 
-@app.route("/leaderboard/reset", methods=["POST"])
-def reset_leaderboard():
-    pwd = request.form.get("password", "")
-    if pwd == ADMIN_PASSWORD:
-        if DATABASE_URL:
-            try:
-                conn = get_db_connection()
-                cur = conn.cursor()
-                cur.execute("DELETE FROM scores")
-                conn.commit()
-                cur.close()
-                conn.close()
-            except Exception as e:
-                print("Error resetting leaderboard:", e)
-        return redirect(url_for("leaderboard"))
-    return render_template("leaderboard.html",
-                           scores=_load_scores(),
-                           error="Incorrect password.")
-
 @app.route("/game")
 def game_html():
     return send_file(os.path.join(os.path.dirname(os.path.abspath(__file__)), "game.html"))

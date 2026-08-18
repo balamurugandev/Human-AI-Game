@@ -63,27 +63,10 @@
   {% endif %}
 
   <!-- Footer actions -->
-  <div style="display:flex; align-items:center; flex-wrap:wrap; gap:12px; margin-top:32px;">
-    <a href="/" class="btn btn-secondary">&#8592; Back to Start</a>
-
-    <!-- Collapsible reset section -->
-    <details style="margin-left:auto;">
-      <summary style="cursor:pointer; list-style:none; user-select:none;
-                      background:var(--red-dk); color:#ff6b6b; border-radius:7px;
-                      padding:10px 18px; font-size:.93rem; font-weight:600;">
-        🗑&nbsp; Reset Leaderboard
-      </summary>
-      <div style="margin-top:10px; background:var(--bg2); padding:16px 18px;
-                  border-radius:8px; display:flex; align-items:center; gap:10px; flex-wrap:wrap;">
-        <form action="/leaderboard/reset" method="POST"
-              style="display:flex; gap:10px; align-items:center; flex-wrap:wrap;"
-              onsubmit="return confirm('This will permanently delete all web leaderboard scores. Continue?');">
-          <input class="text-input" type="password" name="password"
-                 placeholder="Admin password" style="width:220px;" required>
-          <button type="submit" class="btn btn-danger">Confirm Reset</button>
-        </form>
-      </div>
-    </details>
+  <div style="display:flex; align-items:center; justify-content:center; margin-top:32px;">
+    <a href="/" class="btn btn-secondary" style="padding:14px 36px; font-size:1rem; font-weight:700;">
+      &#8592; Back to Start
+    </a>
   </div>
 </div>
 {% endblock %}
