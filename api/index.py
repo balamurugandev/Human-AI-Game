@@ -271,6 +271,14 @@ def play_again():
     session["scored"]        = False
     return redirect(url_for("play"))
 
+@app.route("/img/<path:filename>")
+def serve_image(filename):
+    safe_name = os.path.basename(filename)
+    full_path = os.path.join(IMAGE_FOLDER, safe_name)
+    if not os.path.isfile(full_path):
+        abort(404)
+    return send_file(full_path)
+
 @app.route("/leaderboard")
 def leaderboard():
     return render_template("leaderboard.html", scores=_load_scores(), error=None)
