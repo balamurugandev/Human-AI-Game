@@ -74,7 +74,14 @@ def _load_scores() -> list:
     try:
         conn = get_db_connection()
         cur = conn.cursor(cursor_factory=psycopg2.extras.DictCursor)
-        cur.execute("SELECT name as \"Name\", email as \"Email\", score as \"Score\", total as \"Total\", percentage as \"Percentage\", time_taken as \"TimeTaken\", to_char(created_at, 'YYYY-MM-DD HH24:MI') as \"Date\" FROM scores ORDER BY score DESC, time_taken ASC LIMIT 20")
+        cur.execute("""
+            SELECT name as "Name", score as "Score", total as "Total", 
+                   percentage as "Percentage", time_taken as "TimeTaken", 
+                   to_char(created_at, 'YYYY-MM-DD HH24:MI') as "Date" 
+            FROM scores 
+            ORDER BY score DESC, elapsed_ms ASC, created_at ASC 
+            LIMIT 500
+        """)
         scores = cur.fetchall()
         cur.close()
         conn.close()
@@ -83,7 +90,7 @@ def _load_scores() -> list:
         print("Error loading scores:", e)
         return []
 
-def _save_score(name: str, email: str, score: int, elapsed_ms: int) -> None:
+def _save_score(name: str, score: int, elapsed_ms: int) -> None:
     if not DATABASE_URL:
         return
     try:
@@ -92,8 +99,8 @@ def _save_score(name: str, email: str, score: int, elapsed_ms: int) -> None:
         percentage = f"{score * 100 // NUM_ROUNDS}%"
         time_taken = format_elapsed(elapsed_ms)
         cur.execute(
-            "INSERT INTO scores (name, email, score, total, percentage, time_taken) VALUES (%s, %s, %s, %s, %s, %s) ON CONFLICT (email) DO UPDATE SET score = EXCLUDED.score, percentage = EXCLUDED.percentage, time_taken = EXCLUDED.time_taken",
-            (name, email, score, NUM_ROUNDS, percentage, time_taken)
+            "INSERT INTO scores (name, score, total, percentage, time_taken, elapsed_ms) VALUES (%s, %s, %s, %s, %s, %s)",
+            (name, score, NUM_ROUNDS, percentage, time_taken, elapsed_ms)
         )
         conn.commit()
         cur.close()
@@ -121,42 +128,23 @@ def welcome():
 
 @app.route("/start", methods=["POST"])
 def start():
-    name  = request.form.get("name",  "").strip()
-    email = request.form.get("email", "").strip().lower()
+    name = request.form.get("name", "").strip()
 
     errors = []
-    if not name:  errors.append("Name is required.")
-    if not email: errors.append("Email address is required.")
-    elif not EMAIL_RE.match(email): errors.append("Please enter a valid email address.")
+    if not name:
+        errors.append("Name is required.")
 
-    # Check for duplicate email — one participation per email
-    if not errors and DATABASE_URL:
-        try:
-            conn = get_db_connection()
-            cur = conn.cursor()
-            cur.execute("SELECT id FROM scores WHERE email = %s", (email,))
-            if cur.fetchone():
-                errors.append("This email has already been used. Each person may participate only once.")
-            cur.close()
-            conn.close()
-        except Exception as e:
-            print("Error checking email:", e)
-
-    pairs = []
-    if not errors:
-        pairs = load_pairs()
-        if not pairs:
-            errors.append("No image pairs found. Check the image folder on the server.")
-        elif len(pairs) < NUM_ROUNDS:
-            errors.append(f"Need at least {NUM_ROUNDS} image pairs; found only {len(pairs)}.")
+    pairs = load_pairs()
+    if not pairs:
+        errors.append("No image pairs found. Check the image folder on the server.")
+    elif len(pairs) < NUM_ROUNDS:
+        errors.append(f"Need at least {NUM_ROUNDS} image pairs; found only {len(pairs)}.")
 
     if errors:
-        return render_template("welcome.html", errors=errors,
-                               name=name, email=email)
+        return render_template("welcome.html", errors=errors, name=name)
 
     session.clear()
     session["name"]          = name
-    session["email"]         = email
     session["rounds"]        = _build_rounds(pairs)
     session["current_round"] = 0
     session["score"]         = 0
@@ -242,8 +230,7 @@ def results():
     else:            verdict, vcolor = "The AI had you completely fooled! Try again?", "#e94560"
 
     if not session.get("scored"):
-        _save_score(session["name"], session["email"],
-                    score, elapsed_ms)
+        _save_score(session["name"], score, elapsed_ms)
         session["scored"] = True
 
     return render_template("results.html",

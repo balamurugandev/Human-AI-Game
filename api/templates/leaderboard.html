@@ -12,43 +12,45 @@
   {% endif %}
 
   {% if scores %}
-  <div style="overflow-x:auto; border-radius:12px; overflow:hidden;">
+  <div style="overflow-x:auto; border-radius:12px; overflow:hidden; box-shadow: 0 8px 30px rgba(0,0,0,0.3);">
     <table style="width:100%; border-collapse:collapse; background:var(--bg2);">
       <thead>
         <tr style="background:var(--bg3);">
-          <th style="padding:12px 14px; text-align:left; color:var(--muted);
-                     font-size:.85rem; font-weight:600; white-space:nowrap;">#</th>
-          <th style="padding:12px 14px; text-align:left; color:var(--muted);
-                     font-size:.85rem; font-weight:600; white-space:nowrap;">Name</th>
-          <th style="padding:12px 14px; text-align:left; color:var(--muted);
-                     font-size:.85rem; font-weight:600; white-space:nowrap;">Email</th>
-          <th style="padding:12px 14px; text-align:left; color:var(--muted);
-                     font-size:.85rem; font-weight:600; white-space:nowrap;">Score</th>
-          <th style="padding:12px 14px; text-align:left; color:var(--muted);
-                     font-size:.85rem; font-weight:600; white-space:nowrap;">Time</th>
-          <th style="padding:12px 14px; text-align:left; color:var(--muted);
-                     font-size:.85rem; font-weight:600; white-space:nowrap;">Date</th>
+          <th style="padding:14px 18px; text-align:center; color:var(--muted);
+                     font-size:.88rem; font-weight:700; width:70px;">Rank</th>
+          <th style="padding:14px 18px; text-align:left; color:var(--muted);
+                     font-size:.88rem; font-weight:700;">Participant Name</th>
+          <th style="padding:14px 18px; text-align:center; color:var(--muted);
+                     font-size:.88rem; font-weight:700; width:160px;">Score</th>
+          <th style="padding:14px 18px; text-align:center; color:var(--muted);
+                     font-size:.88rem; font-weight:700; width:130px;">Time Taken</th>
+          <th style="padding:14px 18px; text-align:center; color:var(--muted);
+                     font-size:.88rem; font-weight:700; width:160px;">Date & Time</th>
         </tr>
       </thead>
       <tbody>
         {% for row in scores %}
-        <tr style="background:{% if loop.index % 2 == 0 %}var(--bg2){% else %}#1c2444{% endif %};
-                   border-top:1px solid #0d1530;">
-          <td style="padding:10px 14px; font-weight:700;
+        <tr style="background:{% if loop.index % 2 == 0 %}var(--bg2){% else %}#161f38{% endif %};
+                   border-top:1px solid rgba(255,255,255,0.06); transition:background .15s;">
+          <td style="padding:12px 18px; text-align:center; font-weight:800; font-size:1.05rem;
               color:{% if loop.index == 1 %}#ffd700
                     {% elif loop.index == 2 %}#c0c0c0
                     {% elif loop.index == 3 %}#cd7f32
                     {% else %}var(--muted){% endif %};">
-            {{ loop.index }}
+            {% if loop.index == 1 %}🥇 1
+            {% elif loop.index == 2 %}🥈 2
+            {% elif loop.index == 3 %}🥉 3
+            {% else %}{{ loop.index }}{% endif %}
           </td>
-          <td style="padding:10px 14px; font-weight:600;">{{ row.Name }}</td>
-          <td style="padding:10px 14px; color:var(--muted); font-size:.88rem; word-break:break-all;">{{ row.Email }}</td>
-          <td style="padding:10px 14px; color:var(--accent); font-weight:700;">
-            {{ row.Score }} / {{ row.Total }} &nbsp;({{ row.Percentage }})
+          <td style="padding:12px 18px; font-weight:700; font-size:1rem; color:var(--white);">
+            {{ row.Name }}
           </td>
-          <td style="padding:10px 14px; color:var(--yellow);
-                     font-variant-numeric:tabular-nums;">{{ row.TimeTaken }}</td>
-          <td style="padding:10px 14px; color:var(--muted); font-size:.88rem;">{{ row.Date }}</td>
+          <td style="padding:12px 18px; text-align:center; color:var(--accent); font-weight:800; font-size:1rem;">
+            {{ row.Score }} / {{ row.Total }} &nbsp;<span style="font-size:.85rem; font-weight:600; color:var(--muted);">({{ row.Percentage }})</span>
+          </td>
+          <td style="padding:12px 18px; text-align:center; color:var(--yellow); font-weight:600;
+                     font-variant-numeric:tabular-nums;">⏱ {{ row.TimeTaken }}</td>
+          <td style="padding:12px 18px; text-align:center; color:var(--muted); font-size:.85rem;">{{ row.Date }}</td>
         </tr>
         {% endfor %}
       </tbody>
