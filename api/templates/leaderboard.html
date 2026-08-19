@@ -1,72 +1,441 @@
 {% extends "base.html" %}
 {% block content %}
-<div style="max-width:1060px; margin:0 auto; padding:44px 24px;">
+<style>
+  /* ── Leaderboard Styles ─────────────────────────────────────────── */
+  .leaderboard-header {
+    text-align: center;
+    margin-bottom: 28px;
+  }
+  .leaderboard-title {
+    font-family: 'Bangers', cursive, sans-serif;
+    font-size: clamp(2.4rem, 6vw, 3.8rem);
+    letter-spacing: 3px;
+    color: #ffe600;
+    text-shadow: 
+      2px 2px 0px #e23636,
+      4px 4px 0px #000,
+      6px 6px 16px rgba(0, 0, 0, 0.7);
+    margin: 0 0 6px;
+    display: inline-flex;
+    align-items: center;
+    gap: 12px;
+  }
+  .leaderboard-subtitle {
+    color: var(--muted);
+    font-size: 1rem;
+    letter-spacing: 1px;
+  }
 
-  <h1 style="font-size:2.4rem; font-weight:900; color:var(--accent);
-             text-align:center; margin-bottom:32px;">
-    🏆&nbsp; Leaderboard
-  </h1>
+  /* ── Stats Highlights Bar ───────────────────────────────────────── */
+  .stats-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: 16px;
+    margin-bottom: 28px;
+  }
+  .stat-card {
+    background: var(--bg2);
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    border-radius: 12px;
+    padding: 16px 20px;
+    text-align: center;
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.25);
+  }
+  .stat-val {
+    font-size: 1.6rem;
+    font-weight: 900;
+    color: #fff;
+    font-family: 'Bebas Neue', sans-serif;
+    letter-spacing: 1.5px;
+  }
+  .stat-lbl {
+    font-size: 0.8rem;
+    color: var(--muted);
+    text-transform: uppercase;
+    letter-spacing: 1.5px;
+    margin-top: 2px;
+  }
+
+  /* ── Top 3 Podium ───────────────────────────────────────────────── */
+  .podium-container {
+    display: flex;
+    justify-content: center;
+    gap: 16px;
+    margin-bottom: 32px;
+    flex-wrap: wrap;
+  }
+  .podium-card {
+    background: var(--bg2);
+    border-radius: 14px;
+    padding: 18px 20px;
+    flex: 1;
+    min-width: 220px;
+    max-width: 320px;
+    text-align: center;
+    position: relative;
+    overflow: hidden;
+    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.35);
+    border: 2px solid transparent;
+    transition: transform .2s, box-shadow .2s;
+  }
+  .podium-card:hover {
+    transform: translateY(-4px);
+  }
+  .podium-gold {
+    border-color: #ffd700;
+    background: linear-gradient(180deg, rgba(255, 215, 0, 0.12) 0%, var(--bg2) 100%);
+    box-shadow: 0 8px 30px rgba(255, 215, 0, 0.2);
+  }
+  .podium-silver {
+    border-color: #c0c0c0;
+    background: linear-gradient(180deg, rgba(192, 192, 192, 0.12) 0%, var(--bg2) 100%);
+    box-shadow: 0 8px 30px rgba(192, 192, 192, 0.15);
+  }
+  .podium-bronze {
+    border-color: #cd7f32;
+    background: linear-gradient(180deg, rgba(205, 127, 50, 0.12) 0%, var(--bg2) 100%);
+    box-shadow: 0 8px 30px rgba(205, 127, 50, 0.15);
+  }
+  .podium-medal {
+    font-size: 2rem;
+    margin-bottom: 4px;
+  }
+  .podium-name {
+    font-size: 1.15rem;
+    font-weight: 800;
+    color: #fff;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+  .podium-score {
+    font-size: 1rem;
+    font-weight: 800;
+    color: var(--accent);
+    margin-top: 4px;
+  }
+  .podium-time {
+    font-size: 0.85rem;
+    color: var(--yellow);
+    font-weight: 600;
+    margin-top: 2px;
+  }
+
+  /* ── Filter & Search Controls ───────────────────────────────────── */
+  .controls-bar {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 16px;
+    margin-bottom: 18px;
+    flex-wrap: wrap;
+  }
+  .search-input-wrap {
+    position: relative;
+    flex: 1;
+    min-width: 260px;
+    max-width: 420px;
+  }
+  .search-input-wrap input {
+    width: 100%;
+    padding: 12px 16px 12px 40px;
+    background: var(--bg2);
+    border: 1px solid rgba(255, 255, 255, 0.12);
+    border-radius: 8px;
+    color: #fff;
+    font-size: 0.95rem;
+    outline: none;
+    transition: border-color .2s, box-shadow .2s;
+  }
+  .search-input-wrap input:focus {
+    border-color: var(--accent);
+    box-shadow: 0 0 12px rgba(233, 69, 96, 0.3);
+  }
+  .search-icon {
+    position: absolute;
+    left: 14px;
+    top: 50%;
+    transform: translateY(-50%);
+    color: var(--muted);
+    font-size: 1rem;
+    pointer-events: none;
+  }
+  .filter-tabs {
+    display: flex;
+    gap: 8px;
+    flex-wrap: wrap;
+  }
+  .filter-btn {
+    background: var(--bg2);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    color: var(--muted);
+    padding: 8px 16px;
+    border-radius: 6px;
+    font-size: 0.85rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all .2s;
+  }
+  .filter-btn:hover, .filter-btn.active {
+    background: var(--bg3);
+    color: #fff;
+    border-color: var(--accent);
+  }
+
+  /* ── Table Container ────────────────────────────────────────────── */
+  .table-container {
+    background: var(--bg2);
+    border-radius: 14px;
+    overflow: hidden;
+    box-shadow: 0 10px 40px rgba(0, 0, 0, 0.4);
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    max-height: 620px;
+    overflow-y: auto;
+    position: relative;
+  }
+  .table-container::-webkit-scrollbar {
+    width: 8px;
+  }
+  .table-container::-webkit-scrollbar-track {
+    background: var(--bg2);
+  }
+  .table-container::-webkit-scrollbar-thumb {
+    background: var(--bg3);
+    border-radius: 4px;
+  }
+  .leaderboard-table {
+    width: 100%;
+    border-collapse: collapse;
+    text-align: left;
+  }
+  .leaderboard-table thead th {
+    position: sticky;
+    top: 0;
+    background: #0f1c3f;
+    backdrop-filter: blur(10px);
+    z-index: 5;
+    padding: 14px 18px;
+    font-size: 0.85rem;
+    font-weight: 800;
+    color: var(--muted);
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    border-bottom: 2px solid rgba(255, 255, 255, 0.1);
+  }
+  .leaderboard-table tbody tr {
+    border-top: 1px solid rgba(255, 255, 255, 0.04);
+    transition: background .15s;
+  }
+  .leaderboard-table tbody tr:hover {
+    background: rgba(255, 255, 255, 0.05) !important;
+  }
+  .rank-badge {
+    font-weight: 800;
+    font-size: 1.05rem;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 4px;
+  }
+  .count-info {
+    font-size: 0.9rem;
+    color: var(--muted);
+    margin-top: 12px;
+    text-align: right;
+  }
+</style>
+
+<div style="max-width:1100px; margin:0 auto; padding:40px 20px 60px;">
+
+  <!-- Header -->
+  <div class="leaderboard-header">
+    <h1 class="leaderboard-title">🏆 LEADERBOARD</h1>
+    <p class="leaderboard-subtitle">Live rankings for all tournament participants</p>
+  </div>
 
   {% if error %}
   <div class="error-box" style="text-align:center; margin-bottom:20px;">{{ error }}</div>
   {% endif %}
 
   {% if scores %}
-  <div style="overflow-x:auto; border-radius:12px; overflow:hidden; box-shadow: 0 8px 30px rgba(0,0,0,0.3);">
-    <table style="width:100%; border-collapse:collapse; background:var(--bg2);">
+  <!-- Stats Highlights -->
+  <div class="stats-grid">
+    <div class="stat-card">
+      <div class="stat-val">{{ scores|length }}</div>
+      <div class="stat-lbl">Total Participants</div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-val" style="color: var(--green);">{{ scores[0].Score }} / {{ scores[0].Total }}</div>
+      <div class="stat-lbl">Top Score ({{ scores[0].Percentage }})</div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-val" style="color: var(--yellow);">⏱ {{ scores[0].TimeTaken }}</div>
+      <div class="stat-lbl">Fastest Best Time</div>
+    </div>
+  </div>
+
+  <!-- Top 3 Podium Section (if at least 3 players) -->
+  {% if scores|length >= 3 %}
+  <div class="podium-container">
+    <!-- Rank 2: Silver -->
+    <div class="podium-card podium-silver">
+      <div class="podium-medal">🥈</div>
+      <div class="podium-name">{{ scores[1].Name }}</div>
+      <div class="podium-score">{{ scores[1].Score }}/{{ scores[1].Total }} ({{ scores[1].Percentage }})</div>
+      <div class="podium-time">⏱ {{ scores[1].TimeTaken }}</div>
+    </div>
+    <!-- Rank 1: Gold -->
+    <div class="podium-card podium-gold" style="transform: scale(1.05);">
+      <div class="podium-medal">🥇</div>
+      <div class="podium-name" style="font-size: 1.3rem;">{{ scores[0].Name }}</div>
+      <div class="podium-score" style="font-size: 1.15rem; color: #ffd700;">{{ scores[0].Score }}/{{ scores[0].Total }} ({{ scores[0].Percentage }})</div>
+      <div class="podium-time">⏱ {{ scores[0].TimeTaken }}</div>
+    </div>
+    <!-- Rank 3: Bronze -->
+    <div class="podium-card podium-bronze">
+      <div class="podium-medal">🥉</div>
+      <div class="podium-name">{{ scores[2].Name }}</div>
+      <div class="podium-score">{{ scores[2].Score }}/{{ scores[2].Total }} ({{ scores[2].Percentage }})</div>
+      <div class="podium-time">⏱ {{ scores[2].TimeTaken }}</div>
+    </div>
+  </div>
+  {% endif %}
+
+  <!-- Search and View Filter Bar -->
+  <div class="controls-bar">
+    <div class="search-input-wrap">
+      <span class="search-icon">🔍</span>
+      <input type="text" id="playerSearch" placeholder="Search participant name..." onkeyup="filterLeaderboard()">
+    </div>
+
+    <div class="filter-tabs">
+      <button class="filter-btn active" onclick="setLimit(0, this)">Show All ({{ scores|length }})</button>
+      <button class="filter-btn" onclick="setLimit(25, this)">Top 25</button>
+      <button class="filter-btn" onclick="setLimit(50, this)">Top 50</button>
+      <button class="filter-btn" onclick="setLimit(100, this)">Top 100</button>
+      <button class="filter-btn" onclick="filterScore(5, this)">⭐ 5/5 Only</button>
+    </div>
+  </div>
+
+  <!-- Scrollable High-Performance Table -->
+  <div class="table-container">
+    <table class="leaderboard-table" id="leaderboardTable">
       <thead>
-        <tr style="background:var(--bg3);">
-          <th style="padding:14px 18px; text-align:center; color:var(--muted);
-                     font-size:.88rem; font-weight:700; width:70px;">Rank</th>
-          <th style="padding:14px 18px; text-align:left; color:var(--muted);
-                     font-size:.88rem; font-weight:700;">Participant Name</th>
-          <th style="padding:14px 18px; text-align:center; color:var(--muted);
-                     font-size:.88rem; font-weight:700; width:160px;">Score</th>
-          <th style="padding:14px 18px; text-align:center; color:var(--muted);
-                     font-size:.88rem; font-weight:700; width:130px;">Time Taken</th>
-          <th style="padding:14px 18px; text-align:center; color:var(--muted);
-                     font-size:.88rem; font-weight:700; width:160px;">Date & Time</th>
+        <tr>
+          <th style="text-align:center; width:80px;">Rank</th>
+          <th>Participant Name</th>
+          <th style="text-align:center; width:160px;">Score</th>
+          <th style="text-align:center; width:140px;">Time Taken</th>
+          <th style="text-align:center; width:160px;">Date & Time</th>
         </tr>
       </thead>
       <tbody>
         {% for row in scores %}
-        <tr style="background:{% if loop.index % 2 == 0 %}var(--bg2){% else %}#161f38{% endif %};
-                   border-top:1px solid rgba(255,255,255,0.06); transition:background .15s;">
-          <td style="padding:12px 18px; text-align:center; font-weight:800; font-size:1.05rem;
-              color:{% if loop.index == 1 %}#ffd700
-                    {% elif loop.index == 2 %}#c0c0c0
-                    {% elif loop.index == 3 %}#cd7f32
-                    {% else %}var(--muted){% endif %};">
-            {% if loop.index == 1 %}🥇 1
-            {% elif loop.index == 2 %}🥈 2
-            {% elif loop.index == 3 %}🥉 3
-            {% else %}{{ loop.index }}{% endif %}
+        <tr class="leaderboard-row" data-name="{{ row.Name|lower }}" data-score="{{ row.Score }}"
+            style="background:{% if loop.index % 2 == 0 %}var(--bg2){% else %}#151e36{% endif %};">
+          
+          <td style="text-align:center; padding:12px 16px;">
+            <span class="rank-badge" style="color:{% if loop.index == 1 %}#ffd700{% elif loop.index == 2 %}#c0c0c0{% elif loop.index == 3 %}#cd7f32{% else %}var(--muted){% endif %};">
+              {% if loop.index == 1 %}🥇 1
+              {% elif loop.index == 2 %}🥈 2
+              {% elif loop.index == 3 %}🥉 3
+              {% else %}{{ loop.index }}{% endif %}
+            </span>
           </td>
-          <td style="padding:12px 18px; font-weight:700; font-size:1rem; color:var(--white);">
+
+          <td style="padding:12px 18px; font-weight:700; font-size:1.02rem; color:var(--white);">
             {{ row.Name }}
           </td>
-          <td style="padding:12px 18px; text-align:center; color:var(--accent); font-weight:800; font-size:1rem;">
-            {{ row.Score }} / {{ row.Total }} &nbsp;<span style="font-size:.85rem; font-weight:600; color:var(--muted);">({{ row.Percentage }})</span>
+
+          <td style="text-align:center; padding:12px 18px; color:var(--accent); font-weight:800; font-size:1.02rem;">
+            {{ row.Score }} / {{ row.Total }} &nbsp;<span style="font-size:0.85rem; font-weight:600; color:var(--muted);">({{ row.Percentage }})</span>
           </td>
-          <td style="padding:12px 18px; text-align:center; color:var(--yellow); font-weight:600;
-                     font-variant-numeric:tabular-nums;">⏱ {{ row.TimeTaken }}</td>
-          <td style="padding:12px 18px; text-align:center; color:var(--muted); font-size:.85rem;">{{ row.Date }}</td>
+
+          <td style="text-align:center; padding:12px 18px; color:var(--yellow); font-weight:600; font-variant-numeric:tabular-nums;">
+            ⏱ {{ row.TimeTaken }}
+          </td>
+
+          <td style="text-align:center; padding:12px 18px; color:var(--muted); font-size:0.88rem;">
+            {{ row.Date }}
+          </td>
         </tr>
         {% endfor %}
       </tbody>
     </table>
   </div>
+
+  <div class="count-info" id="countDisplay">
+    Showing {{ scores|length }} of {{ scores|length }} participants
+  </div>
+
   {% else %}
-  <p style="text-align:center; color:var(--muted); font-size:1.1rem; padding:56px 0;">
-    No scores recorded yet — play a round first!
-  </p>
+  <div style="background:var(--bg2); border-radius:14px; padding:60px 24px; text-align:center; border:1px solid rgba(255,255,255,0.06);">
+    <div style="font-size:3rem; margin-bottom:12px;">🎮</div>
+    <h3 style="font-size:1.4rem; font-weight:800; margin-bottom:6px;">No scores recorded yet</h3>
+    <p style="color:var(--muted); font-size:1rem; margin-bottom:24px;">Be the first participant to test your AI spotting skills!</p>
+    <a href="/" class="btn btn-primary" style="padding:14px 36px; font-size:1rem;">Play Round Now</a>
+  </div>
   {% endif %}
 
   <!-- Footer actions -->
-  <div style="display:flex; align-items:center; justify-content:center; margin-top:32px;">
+  <div style="display:flex; align-items:center; justify-content:center; gap:16px; margin-top:36px;">
     <a href="/" class="btn btn-secondary" style="padding:14px 36px; font-size:1rem; font-weight:700;">
       &#8592; Back to Start
     </a>
+    <button onclick="window.location.reload()" class="btn btn-primary" style="padding:14px 28px; font-size:1rem; font-weight:700;">
+      🔄 Refresh Board
+    </button>
   </div>
 </div>
+
+<script>
+  let currentLimit = 0;
+  let requiredScore = null;
+
+  function filterLeaderboard() {
+    const query = document.getElementById('playerSearch').value.toLowerCase().trim();
+    const rows = document.querySelectorAll('.leaderboard-row');
+    let visibleCount = 0;
+    let rankIndex = 0;
+
+    rows.forEach(row => {
+      const name = row.getAttribute('data-name');
+      const score = parseInt(row.getAttribute('data-score'));
+      
+      const matchesSearch = !query || name.includes(query);
+      const matchesScore = (requiredScore === null) || (score === requiredScore);
+      
+      if (matchesSearch && matchesScore) {
+        rankIndex++;
+        if (currentLimit === 0 || rankIndex <= currentLimit) {
+          row.style.display = '';
+          visibleCount++;
+        } else {
+          row.style.display = 'none';
+        }
+      } else {
+        row.style.display = 'none';
+      }
+    });
+
+    const total = rows.length;
+    document.getElementById('countDisplay').textContent = `Showing ${visibleCount} of ${total} participants`;
+  }
+
+  function setLimit(limit, btn) {
+    currentLimit = limit;
+    requiredScore = null;
+    document.querySelectorAll('.filter-btn').forEach(b => b.classList.remove('active'));
+    btn.classList.add('active');
+    filterLeaderboard();
+  }
+
+  function filterScore(score, btn) {
+    requiredScore = score;
+    currentLimit = 0;
+    document.querySelectorAll('.filter-btn').forEach(b => b.classList.remove('active'));
+    btn.classList.add('active');
+    filterLeaderboard();
+  }
+</script>
 {% endblock %}

@@ -80,7 +80,7 @@ def _load_scores() -> list:
                    to_char(created_at, 'YYYY-MM-DD HH24:MI') as "Date" 
             FROM scores 
             ORDER BY score DESC, elapsed_ms ASC, created_at ASC 
-            LIMIT 500
+            LIMIT 1000
         """)
         scores = cur.fetchall()
         cur.close()
